@@ -1,17 +1,12 @@
-function ExecutionSummaryPanel() {
-    return (
-      <div className="bg-gray-900 text-white p-4 rounded-lg">
-        <h2 className="font-semibold mb-3">Execution Summary</h2>
-        <pre className="bg-black/40 rounded-lg p-3 text-xs text-green-400 overflow-x-auto">
-  {`{
-    "task": "Bi-Temporal Change",
-    "tool": "Change-Adapter-v2",
-    "time": "0.82s",
-    "confidence": "91.8%"
-  }`}
-        </pre>
+import React from 'react';
+
+export default function ExecutionSummaryPanel({ trace }) {
+  return (
+    <div className="bg-[#111827]/80 border border-gray-800/80 rounded-xl p-3.5 flex flex-col min-h-0">
+      <h3 className="text-xs font-semibold text-gray-300 uppercase tracking-wide mb-1">Execution Summary</h3>
+      <div className="flex-1 bg-[#070b12] border border-gray-800/80 rounded-lg p-2.5 font-mono text-[11px] text-emerald-400 overflow-auto">
+        <pre>{JSON.stringify(trace, null, 2)}</pre>
       </div>
-    )
-  }
-  
-  export default ExecutionSummaryPanel
+    </div>
+  );
+}
