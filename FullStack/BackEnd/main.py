@@ -5,32 +5,33 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from database import ping_database, client
 from fastapi.staticfiles import StaticFiles
+from dotenv import load_dotenv
 
-# IMPORT YOUR NEW AGENT!
 from agent_router import execute_satquery_agent
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # await ping_database()
-    yield
-    client.close()
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
-UPLOAD_DIR = BASE_DIR / "static" / "uploads"
+STATIC_DIR = BASE_DIR / "static"
+UPLOAD_DIR = STATIC_DIR / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="SatQuery AI Backend", version="1.0.0", lifespan=lifespan)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app = FastAPI(title="SatQuery AI Backend", version="1.0.0")
+
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+def root():
+    return {"status": "SatQuery AI Backend is running"}
 
 @app.post("/api/v1/analyze")
 async def analyze_query(
@@ -40,7 +41,7 @@ async def analyze_query(
 ):
     try:
         saved_files = []
-        
+
         # Save images securely
         file1_path = UPLOAD_DIR / f"{int(time.time())}_{image1.filename}"
         with open(file1_path, "wb") as buffer:
@@ -53,15 +54,13 @@ async def analyze_query(
                 shutil.copyfileobj(image2.file, buffer)
             saved_files.append(str(file2_path))
 
-        # --- THE AI BRAIN INTEGRATION ---
-        # 1. Build metadata string for the LLM
+        # Build metadata string for the LLM
         modality = "SAR/Optical Pair" if image2 else "Single Optical"
         metadata_str = f"User uploaded {len(saved_files)} image(s). Modality: {modality}."
-        
-        # 2. Trigger LangChain!
+
+        # Trigger LangChain agent
         answer, trace, bounding_box = execute_satquery_agent(metadata_str, query)
 
-        # 3. Send payload back to React
         return {
             "status": "success",
             "interaction_id": f"sih_{int(time.time())}",

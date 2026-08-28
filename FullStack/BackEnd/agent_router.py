@@ -14,7 +14,7 @@ def execute_satquery_agent(metadata_str, user_query):
     start_time = time.time()
     
     # 1. Initialize the LLM (Using a standard Groq model)
-    llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0) 
+    llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0)
     
     # 2. Bind Tools
     tools = [
