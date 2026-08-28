@@ -58,8 +58,14 @@ async def analyze_query(
         modality = "SAR/Optical Pair" if image2 else "Single Optical"
         metadata_str = f"User uploaded {len(saved_files)} image(s). Modality: {modality}."
 
-        # Trigger LangChain agent
-        answer, trace, bounding_box = execute_satquery_agent(metadata_str, query)
+        # Trigger LangChain agent - Now unpacking all 4 returned variables
+        answer, trace, bounding_box, agent_image_urls = execute_satquery_agent(
+            metadata_str, query, saved_image_path=saved_files[0] if saved_files else None
+        )
+
+        # If a secondary image was uploaded, ensure it is still passed back to the frontend
+        if image2:
+            agent_image_urls.append(f"/static/uploads/{Path(file2_path).name}")
 
         return {
             "status": "success",
@@ -67,7 +73,7 @@ async def analyze_query(
             "answer": answer,
             "bounding_box": bounding_box,
             "execution_trace": trace,
-            "image_urls": [f"/static/uploads/{Path(f).name}" for f in saved_files]
+            "image_urls": agent_image_urls # Now passing the dynamically generated URLs!
         }
 
     except Exception as e:

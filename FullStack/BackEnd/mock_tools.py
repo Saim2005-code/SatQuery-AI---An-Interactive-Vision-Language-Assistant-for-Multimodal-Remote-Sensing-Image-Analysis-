@@ -47,3 +47,33 @@ class FusionInput(BaseModel):
 def mock_optical_sar_fusion(target_feature: str, image_path: str = None) -> str:
     """Use this tool for SAR and Optical fusion."""
     return f"Applied Lee filter on SAR backscatter and fused with optical multispectral bands. Successfully penetrated atmospheric interference to identify target feature: {target_feature}."
+
+
+import json
+from langchain.tools import tool
+from pydantic import BaseModel, Field
+
+# ... (keep your other tools as they are) ...
+
+class GroundingInput(BaseModel):
+    target_phrase: str = Field(description="The object or region to highlight.")
+    image_path: str = Field(description="Path to the primary image.")
+
+@tool("region_grounding", args_schema=GroundingInput)
+def mock_region_grounding(target_phrase: str, image_path: str = None) -> str:
+    """Use this tool when the user asks to 'find', 'highlight', or 'mark' an object."""
+    
+    # DUMMY DATA: Replace this array with the output from your fine-tuned model later
+    dummy_polygon_coords = [
+        [200, 200], # Top-Left
+        [400, 200], # Top-Right
+        [450, 400], # Bottom-Right
+        [150, 400]  # Bottom-Left
+    ]
+    
+    response_data = {
+        "message": f"Successfully grounded target '{target_phrase}'. Applied polygon masking to detected pixel regions.",
+        "polygon": dummy_polygon_coords
+    }
+    
+    return json.dumps(response_data)
