@@ -1,24 +1,27 @@
-# BackEnd/mock_tools.py
+import json
 from langchain.tools import tool
 from pydantic import BaseModel, Field
-import rasterio
-from pathlib import Path
 
+# Import the real AI engines
+from ml_engines import run_grounding, run_vlm_inference
+
+# --- 1. SINGLE IMAGE VQA (Engine 1) ---
 class VQAInput(BaseModel):
     query: str = Field(description="The question the user is asking about the image.")
     image_path: str = Field(description="Path to the primary image.")
 
 @tool("single_image_vqa", args_schema=VQAInput)
 def mock_single_image_vqa(query: str, image_path: str = None) -> str:
-    """Use this tool to answer general questions about a SINGLE uploaded satellite image using real raster metadata."""
-    if image_path and Path(image_path).exists():
-        with rasterio.open(image_path) as src:
-            width, height = src.width, src.height
-            crs = src.crs.to_string() if src.crs else "EPSG:4326"
-            bands = src.count
-            return f"[SPATIAL VQA ANALYSIS] Analyzing GeoTIFF ({width}x{height}px, {bands} bands, CRS: {crs}). Query '{query}' processed: Detected high-density infrastructure grid with standardized cadastral boundaries."
-    return f"[VQA OUTPUT] Processed query: '{query}'."
+    """Use this tool to answer general questions about a SINGLE uploaded satellite image."""
+    if not image_path:
+        return "[ERROR] No valid image provided."
+    try:
+        vlm_response = run_vlm_inference(image_path, query)
+        return f"[RS-VLM ANALYSIS]: {vlm_response}"
+    except Exception as e:
+        return f"[ERROR] Failed to run Engine 1: {str(e)}"
 
+# --- 2. REGION GROUNDING (Engine 2) ---
 class GroundingInput(BaseModel):
     target_phrase: str = Field(description="The specific object or region the user wants to locate or highlight.")
     image_path: str = Field(description="Path to the primary image.")
@@ -26,9 +29,36 @@ class GroundingInput(BaseModel):
 @tool("region_grounding", args_schema=GroundingInput)
 def mock_region_grounding(target_phrase: str, image_path: str = None) -> str:
     """Use this tool when the user asks to 'find', 'highlight', or 'locate' an object."""
-    # We can calculate dynamic bounding box coordinates based on image dimensions if available
-    return f"Successfully grounded target '{target_phrase}' using cross-attention vision encoder. Bounding box coordinates mapped to spatial extent: [120, 180, 380, 420] (Confidence: 96.4%)."
+    if not image_path:
+        return json.dumps({"message": "[ERROR] No valid image provided.", "polygon": []})
+        
+    try:
+        message, bbox = run_grounding(image_path, target_phrase)
+        
+        if not bbox:
+            return json.dumps({
+                "message": f"Could not confidently locate '{target_phrase}' in the imagery.", 
+                "polygon": []
+            })
+            
+        xmin, ymin, xmax, ymax = bbox
+        
+        # Convert bounding box to the 4-point polygon expected by OpenCV
+        polygon_coords = [
+            [xmin, ymin], # Top-Left
+            [xmax, ymin], # Top-Right
+            [xmax, ymax], # Bottom-Right
+            [xmin, ymax]  # Bottom-Left
+        ]
+        
+        return json.dumps({
+            "message": f"SUCCESS: {message}. Applied polygon masking to detected region.",
+            "polygon": polygon_coords
+        })
+    except Exception as e:
+        return json.dumps({"message": f"[ERROR] Engine 2 Grounding failed: {str(e)}", "polygon": []})
 
+# --- 3. BITEMPORAL CHANGE (Placeholder for now) ---
 class ChangeInput(BaseModel):
     query: str = Field(description="The user's query about what changed.")
     image1_path: str = Field(description="Path to baseline image.")
@@ -39,6 +69,7 @@ def mock_bitemporal_change_analyzer(query: str, image1_path: str = None, image2_
     """Use this tool ONLY when comparing TWO images from different dates."""
     return f"Bi-temporal raster differencing completed between T1 and T2. Detected structural expansion and land-cover transition with a net change index of +14.2% in the designated AOI."
 
+# --- 4. FUSION (Placeholder for now) ---
 class FusionInput(BaseModel):
     target_feature: str = Field(description="The feature to look for.")
     image_path: str = Field(description="Path to image.")
@@ -47,33 +78,3 @@ class FusionInput(BaseModel):
 def mock_optical_sar_fusion(target_feature: str, image_path: str = None) -> str:
     """Use this tool for SAR and Optical fusion."""
     return f"Applied Lee filter on SAR backscatter and fused with optical multispectral bands. Successfully penetrated atmospheric interference to identify target feature: {target_feature}."
-
-
-import json
-from langchain.tools import tool
-from pydantic import BaseModel, Field
-
-# ... (keep your other tools as they are) ...
-
-class GroundingInput(BaseModel):
-    target_phrase: str = Field(description="The object or region to highlight.")
-    image_path: str = Field(description="Path to the primary image.")
-
-@tool("region_grounding", args_schema=GroundingInput)
-def mock_region_grounding(target_phrase: str, image_path: str = None) -> str:
-    """Use this tool when the user asks to 'find', 'highlight', or 'mark' an object."""
-    
-    # DUMMY DATA: Replace this array with the output from your fine-tuned model later
-    dummy_polygon_coords = [
-        [200, 200], # Top-Left
-        [400, 200], # Top-Right
-        [450, 400], # Bottom-Right
-        [150, 400]  # Bottom-Left
-    ]
-    
-    response_data = {
-        "message": f"Successfully grounded target '{target_phrase}'. Applied polygon masking to detected pixel regions.",
-        "polygon": dummy_polygon_coords
-    }
-    
-    return json.dumps(response_data)

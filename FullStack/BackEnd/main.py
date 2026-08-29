@@ -33,6 +33,10 @@ app.add_middleware(
 def root():
     return {"status": "SatQuery AI Backend is running"}
 
+from image_processor import create_web_preview # ADD THIS IMPORT AT THE TOP
+
+# ... (keep all your setup code) ...
+
 @app.post("/api/v1/analyze")
 async def analyze_query(
     query: str = Form(...),
@@ -42,7 +46,6 @@ async def analyze_query(
     try:
         saved_files = []
 
-        # Save images securely
         file1_path = UPLOAD_DIR / f"{int(time.time())}_{image1.filename}"
         with open(file1_path, "wb") as buffer:
             shutil.copyfileobj(image1.file, buffer)
@@ -54,18 +57,28 @@ async def analyze_query(
                 shutil.copyfileobj(image2.file, buffer)
             saved_files.append(str(file2_path))
 
-        # Build metadata string for the LLM
         modality = "SAR/Optical Pair" if image2 else "Single Optical"
         metadata_str = f"User uploaded {len(saved_files)} image(s). Modality: {modality}."
 
-        # Trigger LangChain agent - Now unpacking all 4 returned variables
         answer, trace, bounding_box, agent_image_urls = execute_satquery_agent(
             metadata_str, query, saved_image_path=saved_files[0] if saved_files else None
         )
 
-        # If a secondary image was uploaded, ensure it is still passed back to the frontend
+        # --- NEW LOGIC: GUARANTEE PNG URLs FOR REACT ---
+        final_image_urls = []
+        for url in agent_image_urls:
+            if url.lower().endswith('.tif') or url.lower().endswith('.tiff'):
+                # Convert the TIF to a PNG preview and append the new web-friendly URL
+                filename = url.split('/')[-1]
+                local_path = str(UPLOAD_DIR / filename)
+                web_url = create_web_preview(local_path)
+                final_image_urls.append(web_url)
+            else:
+                final_image_urls.append(url)
+
         if image2:
-            agent_image_urls.append(f"/static/uploads/{Path(file2_path).name}")
+            web_url2 = create_web_preview(str(file2_path))
+            final_image_urls.append(web_url2)
 
         return {
             "status": "success",
@@ -73,7 +86,7 @@ async def analyze_query(
             "answer": answer,
             "bounding_box": bounding_box,
             "execution_trace": trace,
-            "image_urls": agent_image_urls # Now passing the dynamically generated URLs!
+            "image_urls": final_image_urls # Now guaranteed to be displayable in the browser!
         }
 
     except Exception as e:
