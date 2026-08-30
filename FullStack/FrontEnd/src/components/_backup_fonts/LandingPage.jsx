@@ -34,7 +34,7 @@ export default function LandingPage() {
 
       {/* Subtle Footer */}
       <div className="absolute bottom-6 z-10">
-        <p className="text-sm text-gray-600 tracking-widest uppercase font-mono">
+        <p className="text-xs text-gray-600 tracking-widest uppercase font-mono">
           Engineered by Team Kaizen
         </p>
       </div>

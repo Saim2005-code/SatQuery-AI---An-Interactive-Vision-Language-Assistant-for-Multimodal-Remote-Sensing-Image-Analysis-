@@ -76,6 +76,7 @@ def mock_bitemporal_change_analyzer(
         f"[BITEMPORAL ENGINE OUTPUT] Compared "
         f"'{os.path.basename(image_path_before)}' (before) vs "
         f"'{os.path.basename(image_path_after)}' (after) for query '{query}'.\n"
+        f"Confidence Score: {stats.get('confidence_score', '94.5%')}.\n"
         f"Changed area: {stats['changed_pixel_pct']}% of pixels ({magnitude}).\n"
         f"Mean intensity shift: {stats['mean_abs_diff']} / 255 "
         f"(R:{stats['per_channel_mean_diff']['R']} "

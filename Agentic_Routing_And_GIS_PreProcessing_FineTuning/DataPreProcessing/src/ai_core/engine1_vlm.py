@@ -19,7 +19,7 @@ BASE_MODEL_ID = "Qwen/Qwen2-VL-2B-Instruct"
 @st.cache_resource(show_spinner="📦 Loading Engine 1 — RS-VLM Backbone...")
 def get_engine1_vlm():
     """Loads the base Qwen2-VL model + your fine-tuned LoRA adapters, once per process."""
-    print("📦 [ENGINE 1] Loading RS-VLM Backbone from local weights...")
+    print("[ENGINE 1] Loading RS-VLM Backbone from local weights...")
 
     # Cap visual tokens: prevents token explosion on high-res satellite imagery
     min_pixels = 256 * 28 * 28
@@ -37,7 +37,7 @@ def get_engine1_vlm():
     model = PeftModel.from_pretrained(base_model, ADAPTER_PATH)
     model.eval()
 
-    print("✅ [ENGINE 1] RS-VLM Backbone Ready!")
+    print("[ENGINE 1] RS-VLM Backbone Ready!")
     return model, processor, device
 
 

@@ -21,14 +21,14 @@ TEXT_THRESHOLD = 0.25
 @st.cache_resource(show_spinner="📦 Loading Engine 2 — Grounding DINO...")
 def get_engine2_grounding_dino():
     """Loads Grounding DINO zero-shot (no local fine-tuning), once per process."""
-    print("📦 [ENGINE 2] Loading Grounding DINO (zero-shot)...")
+    print("[ENGINE 2] Loading Grounding DINO (zero-shot)...")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     processor = AutoProcessor.from_pretrained(MODEL_ID)
     model = AutoModelForZeroShotObjectDetection.from_pretrained(MODEL_ID).to(device)
     model.eval()
 
-    print("✅ [ENGINE 2] Grounding DINO Ready!")
+    print("[ENGINE 2] Grounding DINO Ready!")
     return model, processor, device
 
 
@@ -62,9 +62,9 @@ def run_grounding_dino(image_path: str, target_phrase: str):
             outputs = model(**inputs)
 
         results = processor.post_process_grounded_object_detection(
-            outputs,
-            inputs.input_ids,
-            box_threshold=BOX_THRESHOLD,
+            outputs=outputs,
+            input_ids=inputs.input_ids,
+            threshold=BOX_THRESHOLD,
             text_threshold=TEXT_THRESHOLD,
             target_sizes=[image.size[::-1]],  # (height, width)
         )[0]
