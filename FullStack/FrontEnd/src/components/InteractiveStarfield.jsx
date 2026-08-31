@@ -26,12 +26,13 @@ export default function InteractiveStarfield() {
     window.addEventListener('mousemove', handleMouseMove);
 
     class Particle {
-      constructor(x, y, dx, dy, size) {
+      constructor(x, y, dx, dy, size, alpha) {
         this.x = x;
         this.y = y;
         this.dx = dx;
         this.dy = dy;
         this.size = size;
+        this.alpha = alpha;
         this.baseX = this.x;
         this.baseY = this.y;
       }
@@ -39,8 +40,11 @@ export default function InteractiveStarfield() {
       draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
-        ctx.fillStyle = 'rgba(34, 211, 238, 0.8)'; // Cyan glow
+        ctx.fillStyle = `rgba(34, 211, 238, ${this.alpha})`;
+        ctx.shadowBlur = this.size > 2 ? 8 : 4;
+        ctx.shadowColor = '#38bdf8';
         ctx.fill();
+        ctx.shadowBlur = 0; // reset for performance
       }
 
       update() {
@@ -85,14 +89,17 @@ export default function InteractiveStarfield() {
 
     const init = () => {
       particlesArray = [];
-      const numberOfParticles = (canvas.width * canvas.height) / 9000;
+      // Increased bubble density: 3.5x more particles
+      const numberOfParticles = Math.floor((canvas.width * canvas.height) / 2600);
       for (let i = 0; i < numberOfParticles; i++) {
-        let size = (Math.random() * 2) + 0.5;
+        // Varied sizes from micro dust to larger floating orbs/bubbles
+        let size = Math.random() < 0.15 ? (Math.random() * 2.5 + 2) : (Math.random() * 1.8 + 0.6);
+        let alpha = (Math.random() * 0.6 + 0.25).toFixed(2);
         let x = Math.random() * innerWidth;
         let y = Math.random() * innerHeight;
-        let dx = (Math.random() - 0.5) * 0.5;
-        let dy = (Math.random() - 0.5) * 0.5;
-        particlesArray.push(new Particle(x, y, dx, dy, size));
+        let dx = (Math.random() - 0.5) * 0.6;
+        let dy = (Math.random() - 0.5) * 0.6;
+        particlesArray.push(new Particle(x, y, dx, dy, size, alpha));
       }
     };
 

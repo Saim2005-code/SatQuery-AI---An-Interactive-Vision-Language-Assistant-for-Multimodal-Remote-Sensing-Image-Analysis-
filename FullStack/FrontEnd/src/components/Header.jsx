@@ -1,4 +1,5 @@
 import React from 'react';
+import kaizenLogo from '../assets/KAIZEN.png';
 
 export default function Header() {
   return (
@@ -9,10 +10,14 @@ export default function Header() {
         </span>
         <span className="text-xs text-gray-500 uppercase tracking-widest mt-1">| Earth Observation Intelligence System</span>
       </div>
-      <div className="flex items-center space-x-3 mt-1">
-        <span className="text-xs text-gray-500 uppercase tracking-widest font-bold">Team Kaizen</span>
-        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
-        <span className="text-xs font-mono text-emerald-400 tracking-wider">FastAPI Connected</span>
+      <div className="flex items-center space-x-2.5 mt-0.5">
+        <img 
+          src={kaizenLogo} 
+          alt="Team Kaizen Logo" 
+          className="h-5 w-auto object-contain brightness-95 hover:brightness-110 transition-all rounded-sm" 
+        />
+        <span className="text-xs text-gray-400 uppercase tracking-widest font-bold">Team Kaizen</span>
+        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" title="System Online"></span>
       </div>
     </header>
   );
